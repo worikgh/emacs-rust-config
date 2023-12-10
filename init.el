@@ -2,6 +2,41 @@
 ;; M-x package-install, select use-package. But if you start via
 ;; `standalone.el', this is being taken care of automatically.
 
+;; https://amitp.blogspot.com/2023/10/emacs-and-shellcheck.html
+
+
+(use-package flymake
+  :bind (("H-e" . flymake-show-project-diagnostics)))
+
+(use-package sh-script
+  :hook (sh-mode . flymake-mode))
+
+;; I use consult for navigating my errors, and I want to make errors
+;; more noticable in the mode line, so my flymake configuration is:
+
+(use-package flymake
+  :bind (("H-e" . my/consult-flymake-project))
+  :preface
+  (defun my/consult-flymake-project ()
+    (interactive)
+    (consult-flymake t))
+  :custom
+  (flymake-suppress-zero-counters t)
+  :config
+  (defface my/flymake-modeline-error-echo
+    '((t :inherit 'flymake-error-echo :background "red"))
+    "Mode line flymake errors")
+  (put 'flymake-error 'mode-line-face 'my/flymake-modeline-error-echo)
+  (defface my/flymake-modeline-warning-echo
+    '((t :inherit 'flymake-warning-echo :background "orange"))
+    "Mode line flymake warnings")
+  (put 'flymake-warning 'mode-line-face 'my/flymake-modeline-warning-echo))
+
+;; It's too early to know what other tweaks I might want, but so far
+;; it's alerted me to several errors in my shell scripts.
+
+;; No ~ backups
+(setq make-backup-files nil)
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; rustic = basic rust-mode + additions
@@ -28,6 +63,25 @@
 
   ;; comment to disable rustfmt on save
   (add-hook 'rustic-mode-hook 'rk/rustic-mode-hook))
+
+;; Enable hs-minor mode
+(add-hook 'rustic-mode-hook 'hs-minor-mode)
+
+;; Always column number mode.  Duh!
+(column-number-mode 1)
+
+;; Enable magit
+(require 'package)
+(add-to-list 'package-archives
+'("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+
+;; For previewing MD files
+;(setq markdown-command "pandoc -s -f markdown -t html")
+
+;; visual line mode 
+(add-hook 'markdown-mode-hook 'visual-line-mode)
+(add-hook 'text-mode-hook 'visual-line-mode) ; For text files
 
 (defun rk/rustic-mode-hook ()
   ;; so that run C-c C-c C-r works without having to confirm, but don't try to
